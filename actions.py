@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any, Dict
 
@@ -8,14 +9,14 @@ from sema4ai.actions import ActionError, Response, action
 from models import (
     GetAssetInput,
     GetStepRunArtifactInput,
+    GetWorkItemsInput,
     ListProcessRunsInput,
     ListStepRunArtifactsInput,
     ListStepRunsInput,
-    StartProcessRunInput,
     ListWorkItemsInput,
-    GetWorkItemsInput,
-    UpdateWorkItemPayloadInput,
     RetryWorkItemsInput,
+    StartProcessRunInput,
+    UpdateWorkItemPayloadInput,
 )
 
 load_dotenv()
@@ -254,12 +255,14 @@ def update_work_item_payloads(input_data: UpdateWorkItemPayloadInput) -> Respons
     Returns:
         Response[dict]: The result of the operation containing the update status for each work item.
     """
-
     update_results = []
 
     for update in input_data.work_item_updates:
         work_item_id = update.work_item_id
         payload = update.payload
+
+        if isinstance(payload, str):
+            payload = json.loads(payload)
 
         if work_item_id and payload:
             url = f"{BASE_URL}/{workspace_id}/work-items/{work_item_id}/payload"
@@ -303,7 +306,6 @@ def retry_work_items(input_data: RetryWorkItemsInput) -> Response[dict]:
 
     response = requests.post(url, headers=HEADERS, json=payload)
 
-    # Handle the response
     if response.status_code in [200, 201]:
         return Response(result=response.json())
     else:

@@ -1,6 +1,7 @@
-from typing import Optional, List, Dict
+import json as json_lib
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Json, validator
 
 
 class ListProcessRunsInput(BaseModel):
@@ -86,19 +87,18 @@ class GetWorkItemsInput(BaseModel):
 
 
 class WorkItemUpdate(BaseModel):
-    work_item_id: str = Field(
-        ...,
-        example="e9674445-ff5c-43d3-9992-75cf500975ec",
-        description="ID of the work item to update.",
-    )
-    payload: Dict = Field(..., description="The new payload for the work item.")
+    work_item_id: str
+    payload: Json
+
+    @validator("payload", pre=True)
+    def convert_dict_to_json(cls, v):
+        if isinstance(v, dict):
+            return json_lib.dumps(v)
+        return v
 
 
 class UpdateWorkItemPayloadInput(BaseModel):
-    work_item_updates: List[WorkItemUpdate] = Field(
-        ...,
-        description="List of work item updates, each containing the work item ID and the new payload.",
-    )
+    work_item_updates: List[WorkItemUpdate]
 
 
 class RetryWorkItemsInput(BaseModel):
